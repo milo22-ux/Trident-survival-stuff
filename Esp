@@ -286,4 +286,3 @@ game:GetService("Workspace").ChildAdded:Connect(function()
         end
     end)
 end)
-end)
