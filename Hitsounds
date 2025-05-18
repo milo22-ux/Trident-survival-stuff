@@ -1,4 +1,3 @@
-local tab = DrRayLibrary.newTab("hitsounds", "ImageIdHere")
 local SoundService = game:GetService("SoundService")
 --
 local sounds = {
