@@ -1,0 +1,22 @@
+local function createHighlight(object)
+    if not object:FindFirstChild("Highlight") then
+        local highlight = Instance.new("Highlight")
+        highlight.Parent = object
+        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
+        highlight.OutlineTransparency = 0.5
+    end
+end
+--
+for _, object in pairs(workspace:GetChildren()) do
+    if object:FindFirstChild("Head") then
+        createHighlight(object)
+    end
+end
+--
+workspace.ChildAdded:Connect(function(child)
+    if child:FindFirstChild("Head") then
+        createHighlight(child)
+    end
+end)
