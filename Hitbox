@@ -1,0 +1,18 @@
+local old = Vector3.new(1.672248125076294, 0.835624098777771, 0.835624098777771)
+local playermodel = getupvalues(getrenv()._G.modules.Player.GetPlayerModel)[1]
+local hitbox = true
+local sleepcheck = true
+--
+game:GetService("RunService").RenderStepped:Connect(function()
+    for i, v in pairs(playermodel) do
+        if hitbox and (not sleepcheck or not v.sleeping) then
+            v.model.Head.Size = Vector3.new(9, 9, 9)
+            v.model.Head.Transparency = 0.5
+            v.model.Head.CanCollide = false
+        else
+            v.model.Head.Size = old
+            v.model.Head.Transparency = 0
+            v.model.Head.CanCollide = true
+        end
+    end
+end)
