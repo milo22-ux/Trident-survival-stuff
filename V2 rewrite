@@ -1,0 +1,32 @@
+-- Modules
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Modules%20v2",true))()
+-- Silent Aim
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Ak.lol/refs/heads/main/Loadstring%20obfuscated",true))()
+-- Hitbox
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Hitbox",true))()
+-- Esp
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Esp",true))()
+-- Chams
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Esp%20chams",true))()
+-- NoSpread
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Nospread%20v2",true))()
+-- Ambient
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Ambient%20v2",true))()
+-- 120 Fov changer
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/120%20fov%20v2",true))()
+-- Arms changer
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Arms%20Colour%20changer%20v2",true))()
+-- Crosshair
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Cross%20hair",true))()
+-- NoSlowDown
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/NoSlowDown%20v2",true))()
+-- JumpShoot
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Jump%20shout%20v2",true))()
+-- NoSway
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/No%20Sway%20v2",true))()
+-- reloadDuringShoot
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/reloadDuringShoot",true))()
+-- rewrite random v2
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Rewrite%20v2%20random",true))()
+-- print the name
+loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Print%20name",true))()
