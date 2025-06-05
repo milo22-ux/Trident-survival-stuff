@@ -1,0 +1,12 @@
+local NoSlowDown = true
+local modules = getrenv()._G.modules
+local old = modules.Character.SetSprintBlocked
+--
+modules.Character.SetSprintBlocked = function(...)
+    local args = { ... }
+    if NoSlowDown then
+        args[1] = false
+        return old(unpack(args))
+    end
+    return old(...)
+end
