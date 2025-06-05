@@ -1,0 +1,55 @@
+local Lighting = game:GetService("Lighting")
+
+local am = true 
+
+local DesiredColor = Color3.fromRGB(255, 255, 255)
+local ambientenabled = am
+local color = ambientenabled and DesiredColor or Lighting.Ambient
+if ambientenabled then 
+    color = DesiredColor
+end
+
+Lighting.Ambient = color
+Lighting.GlobalShadows = true
+Lighting.Brightness = 2
+Lighting.TimeOfDay = "14:00:00"
+Lighting.FogEnd = 100000
+Lighting.FogStart = 0
+Lighting.FogColor = Color3.fromRGB(255, 255, 255)
+Lighting.ColorShift_Top = Color3.new(0, 0, 0)
+Lighting.ColorShift_Bottom = Color3.new(0, 0, 0)
+
+local ambientFunc = {
+    TimeOfDay = Lighting.TimeOfDay,
+    Ambient = Lighting.Ambient,
+    GlobalShadows = Lighting.GlobalShadows,
+    ColorShift_Top = Lighting.ColorShift_Top,
+    ColorShift_Bottom = Lighting.ColorShift_Bottom,
+    FogEnd = Lighting.FogEnd,
+    FogStart = Lighting.FogStart,
+    FogColor = Lighting.FogColor,
+}
+
+local SpoofedAmbient2; SpoofedAmbient2 = hookmetamethod(game, "__index", newcclosure(function(self, string)
+    if checkcaller() then 
+        return SpoofedAmbient2(self, string)
+    end
+    if self == Lighting and ambientFunc[string] then
+        return ambientFunc[string]
+    end
+    return SpoofedAmbient2(self, string)
+end))
+
+local SpoofedAmbient1; SpoofedAmbient1 = hookmetamethod(game, "__newindex", newcclosure(function(self, string, value)
+    if checkcaller() then 
+        return SpoofedAmbient1(self, string, value)
+    end
+    if self == Lighting then
+        ambientFunc[string] = value
+        if string == "Ambient" then
+            color = ambientenabled and DesiredColor or value
+            return SpoofedAmbient1(self, string, color)
+        end
+    end
+    return SpoofedAmbient1(self, string, value)
+end))
