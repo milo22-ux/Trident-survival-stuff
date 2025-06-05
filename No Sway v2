@@ -1,0 +1,21 @@
+local NoSway = true
+--
+local function waitForCameraModule()
+    while not getrenv()._G.modules or not getrenv()._G.modules.Camera or not getrenv()._G.modules.Camera.SetSwaySpeed do
+        task.wait()
+    end
+end
+--
+task.spawn(function()
+    waitForCameraModule()
+--
+    local NoSwayHook
+    NoSwayHook = hookfunction(getrenv()._G.modules.Camera.SetSwaySpeed, function(...)
+        local args = { ... }
+        if NoSway then
+            args[1] = 0
+            return NoSwayHook(unpack(args))
+        end
+        return NoSwayHook(...)
+    end)
+end)
