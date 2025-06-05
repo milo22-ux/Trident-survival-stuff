@@ -1,0 +1,11 @@
+local Nospread = true
+local oldAccuracy = nil
+--
+local No_Spread
+No_Spread = hookmetamethod(Random.new(), "__namecall",(function(self, ...)
+    local args = { ... }
+    if args[1] == -100 and args[2] == 100 and Nospread then
+        return No_Spread(self, -1, 1)
+    end
+    return No_Spread(self, ...)
+end))
