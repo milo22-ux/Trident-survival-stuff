@@ -1,0 +1,37 @@
+local camera = game.Workspace.CurrentCamera
+local default_fov = 120
+local zoom = 120
+local FovEnabled = true
+local currentFov = camera.FieldOfView
+local fovFunc = {
+    FieldOfView = camera.FieldOfView
+}
+--
+local SpoofedFov2
+SpoofedFov2 = hookmetamethod(game, "__index", newcclosure(function(self, key)
+    if checkcaller() then
+        return SpoofedFov2(self, key)
+    end
+    if self == camera and fovFunc[key] then
+        return fovFunc[key]
+    end
+    return SpoofedFov2(self, key)
+end))
+--
+local SpoofedFov1
+SpoofedFov1 = hookmetamethod(game, "__newindex", newcclosure(function(self, key, value)
+    if checkcaller() then
+        return SpoofedFov1(self, key, value)
+    end
+    if self == camera then
+        fovFunc[key] = value
+        if key == "FieldOfView" then
+            if FovEnabled then
+                return SpoofedFov1(self, key, default_fov)
+            else
+                return SpoofedFov1(self, key, currentFov)
+            end
+        end
+    end
+    return SpoofedFov1(self, key, value)
+end))
