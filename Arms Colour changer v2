@@ -1,0 +1,33 @@
+local function setArmProperties(property, value)
+    local armParts = {"LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand"}
+    for _, partName in ipairs(armParts) do
+        game:GetService("Workspace").Ignore.FPSArms[partName][property] = value
+    end
+end
+--
+setArmProperties("Color", Color3.fromRGB(255, 105, 180))
+setArmProperties("Material", Enum.Material.ForceField)
+setArmProperties("TextureID", "rbxassetid://9305457875")
+--
+local function changeArmsToForceField(player)
+    local fpsArms = workspace:FindFirstChild("Ignore")
+    if not fpsArms then
+        return
+    end
+--
+    local fakeArms = fpsArms:FindFirstChild("FPSArms"):FindFirstChild("Fake")
+    if not fakeArms then
+        return
+    end
+--
+    for _, partName in ipairs({"c_LeftLowerArm", "c_RightLowerArm"}) do
+        local armPart = fakeArms:FindFirstChild(partName)
+        if armPart and armPart:IsA("BasePart") then
+            armPart.Material = Enum.Material.ForceField
+            armPart.Color = Color3.fromRGB(255, 105, 180)
+        end
+    end
+end
+--
+local player = game.Players.LocalPlayer
+changeArmsToForceField(player)
