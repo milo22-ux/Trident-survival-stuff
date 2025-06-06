@@ -24,8 +24,6 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-sur
 loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Jump%20shout%20v2",true))()
 -- NoSway
 loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/No%20Sway%20v2",true))()
--- reloadDuringShoot
-loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/reloadDuringShoot",true))()
 -- rewrite random v2
 loadstring(game:HttpGet("https://raw.githubusercontent.com/milo22-ux/Trident-survival-stuff/refs/heads/main/Rewrite%20v2%20random",true))()
 -- print the name
