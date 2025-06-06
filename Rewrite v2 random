@@ -268,3 +268,86 @@ end)
 tab.newToggle("Auto Hold Button", "Toggle GUI for holding W + C", false, function(toggleState)
     button.Visible = toggleState
 end)
+local _G = getfenv(0)
+_G.dev_class = {}
+local dev_class = _G.dev_class
+--
+dev_class.settings = { destroy_replication = false }
+dev_class.hook_func = hookfunction
+dev_class.newc_closure = newcclosure
+--
+local Vercore
+Vercore = dev_class.hook_func(game:GetService("Players").LocalPlayer.RemoteEvent.FireServer, dev_class.newc_closure(function(self, ...)
+    local args = { ... }
+    if args[1] == 1 and dev_class.settings.destroy_replication then
+        args[4] = math.huge
+    end
+    return Vercore(self, unpack(args))
+end))
+--
+local DrawingInvisible = Drawing.new("Text")
+DrawingInvisible.Visible = false
+DrawingInvisible.Position = Vector2.new(10, 10)
+DrawingInvisible.Size = 20
+DrawingInvisible.Text = "Invisible"
+DrawingInvisible.Center = false
+DrawingInvisible.Outline = true
+--
+local hue = 0
+game:GetService("RunService").RenderStepped:Connect(function()
+    hue = (hue + 1) % 360
+    DrawingInvisible.Color = Color3.fromHSV(hue / 360, 1, 1)
+end)
+--
+tab.newToggle("Invis", "", false, function(toggleState)
+    dev_class.settings.destroy_replication = toggleState
+    DrawingInvisible.Visible = toggleState
+end)
+_G = getfenv(0)
+_G.dev_resolver = {}
+local d = _G.dev_resolver
+d.game_modules = { Player = {} }
+local gm = d.game_modules
+
+for _, v in pairs(getgc(true)) do
+    if typeof(v) == "function" and islclosure(v) then
+        local i = debug.getinfo(v)
+        local n = string.match(i.short_src, "%.([%w_]+)$")
+        if n and gm[n] then gm[n][i.name] = i.func end
+    end
+end
+--
+local players = debug.getupvalue(gm.Player.GetPlayerModel,1)
+local badNum = function(n)return typeof(n)~="number"or math.abs(n)==math.huge or n~=n or math.abs(n)>9e8 or math.abs(n)==1e99 end
+local badVec = function(v)return typeof(v)~="Vector3"or badNum(v.X)or badNum(v.Y)or badNum(v.Z)or v.Magnitude>1e6 end
+task.spawn(function()
+    while task.wait(0.3) do
+        local pos = (char and char.Position) or Vector3.zero
+        for i,v in pairs(players) do
+            if v and v.model and not(v.goalAngleX==0.721933) then
+                local p = v.model:GetPivot().Position
+                local weird
+                if badNum(v.goalAngleY) then v.goalAngleY=0 weird=true end
+                if badNum(v.startAngleY) then v.startAngleY=0 weird=true end
+                if badVec(v.currentPosition) then v.currentPosition=Vector3.zero weird=true end
+                if badVec(v.startPosition) then v.startPosition=Vector3.zero weird=true end
+                if badVec(v.goalPosition) then v.goalPosition=Vector3.zero weird=true end
+                if getmetatable(v)~="Locked"then
+                    local o=v
+                    players[i]=setmetatable({},{
+                        __index=o,
+                        __newindex=function(_,k,val)
+                            if o.goalAngleX==0.721933 then o[k]=val
+                            elseif (k=="goalAngleY"or k=="startAngleY")and badNum(val)then o[k]=0
+                            elseif (k=="goalPosition"or k=="startPosition"or k=="currentPosition")and badVec(val)then o[k]=Vector3.zero
+                            else o[k]=val end
+                        end,
+                        __metatable="Locked"
+                    })
+                end
+            end
+        end
+    end
+end) 
+--
+return d
