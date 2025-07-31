@@ -1,0 +1,103 @@
+local GetFunction = function(Script, Line)
+    for _, v in getgc() do
+        if typeof(v) == "function" then
+            local src, line = debug.info(v, "sl")
+            if src:find(Script) and line == Line then
+                return v
+            end
+        end
+    end
+end
+--
+local SetInfraredEnabled = GetFunction("PlayerClient", 588)
+local PlayerReg = debug.getupvalue(SetInfraredEnabled, 2)
+--
+local Vercore = {
+    ESP_Objects = {}
+}
+--
+local cam = workspace.CurrentCamera
+local rs = game:GetService("RunService")
+--
+function Vercore:Create(className, properties)
+    local ok, obj = pcall(Drawing.new, className)
+    if not ok or not obj then return end
+    for prop, value in pairs(properties or {}) do
+        pcall(function() obj[prop] = value end)
+    end
+    return obj
+end
+--
+function Vercore:SetupESP(player)
+    self.ESP_Objects[player.id] = self:Create("Text", {
+        Text = ":Weapon:",
+        Size = 17,
+        Color = Color3.fromRGB(255, 0, 0),
+        Outline = true,
+        OutlineColor = Color3.fromRGB(0, 0, 0),
+        Center = true,
+        Visible = false
+    })
+end
+--
+function Vercore:UpdateESP()
+    local activeIds = {}
+--
+    for _, player in pairs(PlayerReg) do
+        if not player or player.sleeping then continue end
+        local model = rawget(player, "model")
+        if not model then continue end
+--
+        local head = model:FindFirstChild("Head") or model:FindFirstChild("Torso")
+        if not head then continue end
+--
+        local id = player.id
+        activeIds[id] = true
+--
+        if not self.ESP_Objects[id] then
+            self:SetupESP(player)
+        end
+--
+        local esp = self.ESP_Objects[id]
+        self:UpdatePosition(esp, head, player)
+    end
+--
+    for id, esp in pairs(self.ESP_Objects) do
+        if not activeIds[id] then
+            self:HideESP(esp)
+            self.ESP_Objects[id] = nil
+        end
+    end
+end
+--
+function Vercore:UpdatePosition(esp, part, player)
+    local pos, onScreen = cam:WorldToViewportPoint(part.Position)
+    if onScreen then
+        esp.Position = Vector2.new(pos.X, pos.Y)
+        esp.Visible = true
+        self:UpdateText(esp, part, player)
+    else
+        self:HideESP(esp)
+    end
+end
+--
+function Vercore:UpdateText(esp, part, player)
+    local weapon = player.equippedItem and player.equippedItem.type or "None"
+    local dist = (cam.CFrame.Position - part.Position).Magnitude
+    esp.Text = weapon .. " [" .. math.floor(dist) .. "]"
+--
+    local t = tick() * 2
+    esp.Color = Color3.fromRGB(
+        math.floor(math.sin(t) * 127 + 128),
+        math.floor(math.sin(t + 2) * 127 + 128),
+        math.floor(math.sin(t + 4) * 127 + 128)
+    )
+end
+--
+function Vercore:HideESP(esp)
+    if esp then esp.Visible = false end
+end
+--
+rs.RenderStepped:Connect(function()
+    Vercore:UpdateESP()
+end)
