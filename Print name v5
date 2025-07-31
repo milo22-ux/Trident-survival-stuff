@@ -1,0 +1,33 @@
+local TextLabel = Drawing.new("Text")
+TextLabel.Text = "Dildo.xyz - V5 free"
+TextLabel.Size = 24
+TextLabel.Center = true
+TextLabel.Outline = true
+TextLabel.Visible = true
+--
+local viewportSize = game:GetService("Workspace").CurrentCamera.ViewportSize
+TextLabel.Position = Vector2.new(viewportSize.X / 2, 15)
+--
+local RunService = game:GetService("RunService")
+local hue = 0
+--
+RunService.RenderStepped:Connect(function()
+    hue = (hue + 0.01) % 1
+    local color = Color3.fromHSV(hue, 1, 1)
+    TextLabel.Color = color
+    --
+    local newViewportSize = game:GetService("Workspace").CurrentCamera.ViewportSize
+    TextLabel.Position = Vector2.new(newViewportSize.X / 2, 15)
+end)
+-- Label
+for _, line in ipairs({
+"███████▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓███████▓▒░ ░▒▓██████▓▒░       ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓████████▓▒░ ",
+"░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░ ",
+"░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░    ░▒▓██▓▒░  ",
+"░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░       ░▒▓██████▓▒░ ░▒▓██████▓▒░   ░▒▓██▓▒░    ",
+"░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░  ░▒▓█▓▒░    ░▒▓██▓▒░      ",
+"░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓██▓▒░▒▓█▓▒░░▒▓█▓▒░  ░▒▓█▓▒░   ░▒▓█▓▒░        ",
+"░▒▓███████▓▒░░▒▓█▓▒░▒▓████████▓▒░▒▓███████▓▒░ ░▒▓██████▓▒░░▒▓██▓▒░▒▓█▓▒░░▒▓█▓▒░  ░▒▓█▓▒░   ░▒▓████████▓▒░ "
+}) do
+    print(line)
+end
