@@ -1,0 +1,84 @@
+local camera = workspace.CurrentCamera
+local skeleton_enabled = true
+--
+local GetFunction = function(Script, Line)
+    for _, v in pairs(getgc()) do
+        if typeof(v) == "function" and debug.info(v, "sl") then
+            local src, lineNum = debug.info(v, "s"), debug.info(v, "l")
+            if src:find(Script) and lineNum == Line then
+                return v
+            end
+        end
+    end
+end
+--
+local SetInfraredEnabled = GetFunction("PlayerClient", 588)
+local PlayerReg = debug.getupvalue(SetInfraredEnabled, 2)
+--
+local skeleton_order = {
+    ["LeftFoot"] = "LeftLowerLeg",
+    ["LeftLowerLeg"] = "LeftUpperLeg",
+    ["LeftUpperLeg"] = "LowerTorso",
+    ["RightFoot"] = "RightLowerLeg",
+    ["RightLowerLeg"] = "RightUpperLeg",
+    ["RightUpperLeg"] = "LowerTorso",
+    ["LeftHand"] = "LeftLowerArm",
+    ["LeftLowerArm"] = "LeftUpperArm",
+    ["LeftUpperArm"] = "Torso",
+    ["RightHand"] = "RightLowerArm",
+    ["RightLowerArm"] = "RightUpperArm",
+    ["RightUpperArm"] = "Torso",
+    ["LowerTorso"] = "Torso",
+    ["Torso"] = "Head"
+}
+--
+local function worldToScreen(pos)
+    local screenPos, onScreen = camera:WorldToViewportPoint(pos)
+    return Vector2.new(screenPos.X, screenPos.Y), onScreen
+end
+--
+local function drawSkeleton(model)
+    local bones = {}
+--
+    for partName, parentName in pairs(skeleton_order) do
+        local part = model:FindFirstChild(partName)
+        local parent = model:FindFirstChild(parentName)
+        if part and parent then
+            local line = Drawing.new("Line")
+            line.Thickness = 1.5
+            line.Color = Color3.fromRGB(255, 255, 255)
+            line.Transparency = 1
+            line.Visible = true
+--
+            bones[#bones + 1] = {
+                line = line,
+                a = part,
+                b = parent
+            }
+        end
+    end
+--
+    game:GetService("RunService").RenderStepped:Connect(function()
+        for _, bone in bones do
+            local aPos, aOn = worldToScreen(bone.a.Position)
+            local bPos, bOn = worldToScreen(bone.b.Position)
+--
+            bone.line.Visible = aOn and bOn
+            if aOn and bOn then
+                bone.line.From = aPos
+                bone.line.To = bPos
+            end
+        end
+    end)
+end
+--
+if skeleton_enabled then
+    for _, v in pairs(PlayerReg) do
+        if not v.sleeping then
+            local model = rawget(v, "model")
+            if model and model:IsA("Model") and model:FindFirstChild("Head") then
+                drawSkeleton(model)
+            end
+        end
+    end
+end
