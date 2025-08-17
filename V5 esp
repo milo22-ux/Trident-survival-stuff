@@ -1,103 +1,419 @@
-local GetFunction = function(Script, Line)
-    for _, v in getgc() do
-        if typeof(v) == "function" then
-            local src, line = debug.info(v, "sl")
-            if src:find(Script) and line == Line then
-                return v
+wait(0.1)
+repeat
+    wait(0.1)
+until game:IsLoaded()
+--
+wait(0.5)
+--
+local Cache = {}
+local Cache2 = {}
+local CornerBoxes = true
+local WeaponType = true
+local Names = true
+local Bar = false
+local MaxDistance = 1000
+--
+local modules = {
+    ["PlayerClient"] = {},
+}
+for _, v in pairs(getgc(true)) do
+    if typeof(v) == "function" and islclosure(v) then
+        local info = debug.getinfo(v)
+        local name = string.match(info.short_src, "%.([%w_]+)$")
+        if name and modules[name] and info.name then
+            modules[name][info.name] = info.func
+        end
+    end
+end
+--
+local PlayerList = debug.getupvalue(modules.PlayerClient.updatePlayers, 1)
+--
+local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+if playerGui:FindFirstChild("XDEDEADEDE") then
+    playerGui.XDEDEADEDE:Destroy()
+end
+--
+local Beamed = {
+    Varis = {
+        RunService = game:GetService("RunService"),
+        Camera = game:GetService("Workspace").CurrentCamera,
+        Lighting = game:GetService("Lighting"),
+        UserInput = game:GetService("UserInputService"),
+        LogService = game:GetService("LogService"),
+    },
+}
+--
+local BeamVar = Beamed.Varis
+local VisibilityState = {}
+local BarValue = 100 
+--
+local function CreateClass(Class, Properties)
+    local ClassInt = typeof(Class) == "string" and Instance.new(Class) or Class
+    for Property, Value in next, Properties do
+        ClassInt[Property] = Value
+    end
+    return ClassInt
+end
+--
+local XDEDEADEDE = CreateClass("ScreenGui", {
+    Parent = playerGui,
+    Name = "XDEDEADEDE",
+})
+--
+local function DupeCheck(name)
+    local existingESP = XDEDEADEDE:FindFirstChild(name)
+    if existingESP then
+        existingESP:Destroy()
+    end
+end
+--
+local function IsSleeping(model)
+    if model and model:FindFirstChild("AnimationController") and model.AnimationController:FindFirstChild("Animator") then
+        for _, v in pairs(model.AnimationController.Animator:GetPlayingAnimationTracks()) do
+            if v.Animation.AnimationId == "rbxassetid://13280887764" then
+                return true
             end
         end
     end
+    return false
 end
 --
-local SetInfraredEnabled = GetFunction("PlayerClient", 588)
-local PlayerReg = debug.getupvalue(SetInfraredEnabled, 2)
+local function Calc(distance)
+    local maxBarWidth = 4
+    local minBarWidth = 1
+    local distanceThreshold = 200
 --
-local Vercore = {
-    ESP_Objects = {}
-}
---
-local cam = workspace.CurrentCamera
-local rs = game:GetService("RunService")
---
-function Vercore:Create(className, properties)
-    local ok, obj = pcall(Drawing.new, className)
-    if not ok or not obj then return end
-    for prop, value in pairs(properties or {}) do
-        pcall(function() obj[prop] = value end)
-    end
-    return obj
-end
---
-function Vercore:SetupESP(player)
-    self.ESP_Objects[player.id] = self:Create("Text", {
-        Text = ":Weapon:",
-        Size = 17,
-        Color = Color3.fromRGB(255, 0, 0),
-        Outline = true,
-        OutlineColor = Color3.fromRGB(0, 0, 0),
-        Center = true,
-        Visible = false
-    })
-end
---
-function Vercore:UpdateESP()
-    local activeIds = {}
---
-    for _, player in pairs(PlayerReg) do
-        if not player or player.sleeping then continue end
-        local model = rawget(player, "model")
-        if not model then continue end
---
-        local head = model:FindFirstChild("Head") or model:FindFirstChild("Torso")
-        if not head then continue end
---
-        local id = player.id
-        activeIds[id] = true
---
-        if not self.ESP_Objects[id] then
-            self:SetupESP(player)
-        end
---
-        local esp = self.ESP_Objects[id]
-        self:UpdatePosition(esp, head, player)
-    end
---
-    for id, esp in pairs(self.ESP_Objects) do
-        if not activeIds[id] then
-            self:HideESP(esp)
-            self.ESP_Objects[id] = nil
-        end
-    end
-end
---
-function Vercore:UpdatePosition(esp, part, player)
-    local pos, onScreen = cam:WorldToViewportPoint(part.Position)
-    if onScreen then
-        esp.Position = Vector2.new(pos.X, pos.Y)
-        esp.Visible = true
-        self:UpdateText(esp, part, player)
+    if distance > distanceThreshold then
+        return minBarWidth
     else
-        self:HideESP(esp)
+        local scaleFactor = (distanceThreshold - distance) / distanceThreshold
+        return maxBarWidth * scaleFactor + minBarWidth
     end
 end
 --
-function Vercore:UpdateText(esp, part, player)
-    local weapon = player.equippedItem and player.equippedItem.type or "None"
-    local dist = (cam.CFrame.Position - part.Position).Magnitude
-    esp.Text = weapon .. " [" .. math.floor(dist) .. "]"
+local function IsVisible(model)
+    local humanoidRootPart = model:FindFirstChild("HumanoidRootPart")
+    if not humanoidRootPart then return false end
 --
-    local t = tick() * 2
-    esp.Color = Color3.fromRGB(
-        math.floor(math.sin(t) * 127 + 128),
-        math.floor(math.sin(t + 2) * 127 + 128),
-        math.floor(math.sin(t + 4) * 127 + 128)
-    )
+    local cameraPos = BeamVar.Camera.CFrame.Position
+    local targetPos = humanoidRootPart.Position
+    local direction = (targetPos - cameraPos).unit
+    local distance = (targetPos - cameraPos).magnitude
+--
+    if distance > MaxDistance then
+        return false
+    end
+--
+    local rays = {
+        Ray.new(cameraPos, direction * distance * 0.5),
+        Ray.new(cameraPos, direction * distance * 0.75),
+        Ray.new(cameraPos, direction * distance),
+        Ray.new(cameraPos, direction * distance * 1.25),
+        Ray.new(cameraPos, direction * distance * 1.5)
+    }
+--
+    for _, ray in pairs(rays) do
+        local hitPart, _ = workspace:FindPartOnRay(ray, game.Players.LocalPlayer.Character, false, true)
+        if hitPart and hitPart:IsDescendantOf(model) then
+            return true
+        end
+    end
+--
+    return false
 end
 --
-function Vercore:HideESP(esp)
-    if esp then esp.Visible = false end
+local function ESP(playertable)
+    if not playertable then return end
+    local model = playertable.model
+    local humanoidRootPart = model:FindFirstChild("HumanoidRootPart")
+    if not humanoidRootPart then
+        return
+    end
+--
+    DupeCheck(model.Name)
+--
+    local function CreateCornerBox(name, position, size, anchorPoint)
+        return CreateClass("Frame", {
+            Parent = XDEDEADEDE,
+            Name = name,
+            BackgroundColor3 = Color3.fromRGB(161,0,219),
+            Position = position,
+            Size = size,
+            AnchorPoint = anchorPoint,
+            Visible = CornerBoxes,
+            ZIndex = 10,
+        })
+    end
+--
+    local function CreateBar(name, position, size)
+        return CreateClass("Frame", {
+            Parent = XDEDEADEDE,
+            Name = name,
+            BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+            Position = position,
+            Size = size,
+            Visible = Bar,
+            ZIndex = 11,
+        })
+    end
+--
+    local function CreateBarBackRound(name, position, size)
+        return CreateClass("Frame", {
+            Parent = XDEDEADEDE,
+            Name = name,
+            BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+            Position = position,
+            Size = size,
+            Visible = Bar,
+            ZIndex = 9,
+        })
+    end
+--
+    local LeftTop = CreateCornerBox("LeftTop", UDim2.new(0, 0, 0, 0), UDim2.new(0, 0, 0, 1), Vector2.new(0, 0))
+    local LeftSide = CreateCornerBox("LeftSide", UDim2.new(0, 0, 0, 0), UDim2.new(0, 1, 0, 0), Vector2.new(0, 0))
+    local RightTop = CreateCornerBox("RightTop", UDim2.new(0, 0, 0, 0), UDim2.new(0, 0, 0, 1), Vector2.new(0, 0))
+    local RightSide = CreateCornerBox("RightSide", UDim2.new(0, 0, 0, 0), UDim2.new(0, 1, 0, 0), Vector2.new(0, 0))
+    local BottomSide = CreateCornerBox("BottomSide", UDim2.new(0, 0, 0, 0), UDim2.new(0, 1, 0, 0), Vector2.new(0, 0))
+    local BottomDown = CreateCornerBox("BottomDown", UDim2.new(0, 0, 0, 0), UDim2.new(0, 0, 0, 1), Vector2.new(0, 0))
+    local BottomRightSide = CreateCornerBox("BottomRightSide", UDim2.new(0, 0, 0, 0), UDim2.new(0, 1, 0, 0), Vector2.new(0, 0))
+    local BottomRightDown = CreateCornerBox("BottomRightDown", UDim2.new(0, 0, 0, 0), UDim2.new(0, 0, 0, 1), Vector2.new(0, 0))
+--
+    local NameTag = CreateClass("TextLabel", {
+        Parent = XDEDEADEDE,
+        Name = "NameTag",
+        BackgroundTransparency = 1,
+        Font = Enum.Font.Code,
+        TextColor3 = Color3.fromRGB(161,0,219),
+        TextStrokeTransparency = 0,
+        TextSize = 11,
+        TextStrokeColor3 = Color3.fromRGB(0, 0, 0),
+        Size = UDim2.new(0, 100, 0, 20),
+        AnchorPoint = Vector2.new(0.5, 0),
+        Position = UDim2.new(0.5, 0, 0, 0),
+        Visible = Names,  
+    })
+    local WeaponText = CreateClass("TextLabel", {
+        Parent = XDEDEADEDE,
+        Name = "WeaponText",
+        BackgroundTransparency = 1,
+        Font = Enum.Font.Code,
+        TextColor3 = Color3.fromRGB(161,0,219),
+        TextStrokeTransparency = 0,
+        TextSize = 11,
+        TextStrokeColor3 = Color3.fromRGB(0, 0, 0),
+        Size = UDim2.new(0, 100, 0, 20),
+        AnchorPoint = Vector2.new(0.5, 0),
+        Position = UDim2.new(0.5, 0, 0, 20),
+        Visible = WeaponType,  
+    })
+--
+    local BarBackRound = CreateBarBackRound("BarBackRound", UDim2.new(0, 0, 0, 0), UDim2.new(0, 8, 0, 100))
+    local Bar = CreateBar("Bar", UDim2.new(0, 0, 0, 0), UDim2.new(0, 0, 0, 0))
+--
+    local UIGradient = CreateClass("UIGradient", {
+        Parent = Bar,
+        Name = "UIGradient",
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(9, 255, 0)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 238, 0)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 4)),
+        }),
+        Rotation = 90,
+    })
+--
+    local Connection
+    Connection = BeamVar.RunService.RenderStepped:Connect(function()
+        if model and model.Parent and humanoidRootPart and humanoidRootPart.Parent then
+            local visible = IsVisible(model)
+            VisibilityState[model] = visible
+--
+            if IsSleeping(model) then
+                LeftTop.Visible = false
+                LeftSide.Visible = false
+                BottomSide.Visible = false
+                BottomDown.Visible = false
+                RightTop.Visible = false
+                RightSide.Visible = false
+                BottomRightSide.Visible = false
+                BottomRightDown.Visible = false
+                NameTag.Visible = false
+                WeaponText.Visible = false
+                BarBackRound.Visible = false
+                Bar.Visible = false
+                return
+            end
+--
+            local Pos, OnScreen = BeamVar.Camera:WorldToScreenPoint(humanoidRootPart.Position)
+            local Size = humanoidRootPart.Size.Y
+            local distance = math.floor((BeamVar.Camera.CFrame.Position - humanoidRootPart.Position).magnitude)
+            local scaleFactor = 12 / (Pos.Z * math.tan(math.rad(BeamVar.Camera.FieldOfView * 0.5)) * 2) * 100
+            local w, h = 3 * scaleFactor, 4.5 * scaleFactor
+            local HealthWidth = Calc(distance)
+            local WeaponFound = playertable.equippedItem and playertable.equippedItem.type or "None"
+--
+            if OnScreen then
+                LeftTop.Position = UDim2.new(0, Pos.X - w / 2, 0, Pos.Y - h / 2)
+                LeftTop.Size = UDim2.new(0, w / 5, 0, 1)
+--
+                LeftSide.Position = UDim2.new(0, Pos.X - w / 2, 0, Pos.Y - h / 2)
+                LeftSide.Size = UDim2.new(0, 1, 0, h / 5)
+--
+                BottomSide.Position = UDim2.new(0, Pos.X - w / 2, 0, Pos.Y + h / 2 - h / 5)
+                BottomSide.Size = UDim2.new(0, 1, 0, h / 5)
+--
+                BottomDown.Position = UDim2.new(0, Pos.X - w / 2, 0, Pos.Y + h / 2)
+                BottomDown.Size = UDim2.new(0, w / 5, 0, 1)
+--
+                RightTop.Position = UDim2.new(0, Pos.X + w / 2 - w / 5, 0, Pos.Y - h / 2)
+                RightTop.Size = UDim2.new(0, w / 5, 0, 1)
+--
+                RightSide.Position = UDim2.new(0, Pos.X + w / 2 - 1, 0, Pos.Y - h / 2)
+                RightSide.Size = UDim2.new(0, 1, 0, h / 5)
+--
+                BottomRightSide.Position = UDim2.new(0, Pos.X + w / 2 - 1, 0, Pos.Y + h / 2 - h / 5)
+                BottomRightSide.Size = UDim2.new(0, 1, 0, h / 5)
+--
+                BottomRightDown.Position = UDim2.new(0, Pos.X + w / 2 - w / 5, 0, Pos.Y + h / 2)
+                BottomRightDown.Size = UDim2.new(0, w / 5, 0, 1)
+--
+                NameTag.Position = UDim2.new(0, Pos.X, 0, Pos.Y - h / 2 - 20)
+                WeaponText.Position = UDim2.new(0, Pos.X, 0, Pos.Y + h / 2 + 3)
+--
+                BarBackRound.Position = UDim2.new(0, Pos.X - w / 2 - 10, 0, Pos.Y - h / 2)
+                BarBackRound.Size = UDim2.new(0, HealthWidth, 0, h)
+--
+                local barHeight = (BarValue / 100) * h
+                Bar.Position = UDim2.new(0, Pos.X - w / 2 - 10, 0, Pos.Y + h / 2 - barHeight)
+                Bar.Size = UDim2.new(0, HealthWidth, 0, barHeight)
+--
+                local username = model:FindFirstChild("Head") and model.Head:FindFirstChild("Nametag") and model.Head.Nametag.tag.Text or "Player"
+                NameTag.Text = username .. " [" .. distance .. "s]"
+--
+                WeaponText.Text = "[" .. (WeaponFound:upper() or "NONE") .. "]"
+--
+                local color = VisibilityState[model] and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(161, 0, 219)
+--
+                LeftTop.BackgroundColor3 = color
+                LeftSide.BackgroundColor3 = color
+                RightTop.BackgroundColor3 = color
+                RightSide.BackgroundColor3 = color
+                BottomSide.BackgroundColor3 = color
+                BottomDown.BackgroundColor3 = color
+                BottomRightSide.BackgroundColor3 = color
+                BottomRightDown.BackgroundColor3 = color
+                NameTag.TextColor3 = color
+                WeaponText.TextColor3 = color
+--
+                LeftTop.Visible = CornerBoxes
+                LeftSide.Visible = CornerBoxes
+                RightTop.Visible = CornerBoxes
+                RightSide.Visible = CornerBoxes
+                BottomSide.Visible = CornerBoxes
+                BottomDown.Visible = CornerBoxes
+                BottomRightSide.Visible = CornerBoxes
+                BottomRightDown.Visible = CornerBoxes
+                NameTag.Visible = Names
+                WeaponText.Visible = WeaponType
+                BarBackRound.Visible = Bar
+                Bar.Visible = Bar
+            else
+                LeftTop.Visible = false
+                LeftSide.Visible = false
+                BottomSide.Visible = false
+                BottomDown.Visible = false
+                RightTop.Visible = false
+                RightSide.Visible = false
+                BottomRightSide.Visible = false
+                BottomRightDown.Visible = false
+                NameTag.Visible = false
+                WeaponText.Visible = false
+                BarBackRound.Visible = false
+                Bar.Visible = false
+            end
+        else
+            LeftTop.Visible = false
+            LeftSide.Visible = false
+            RightTop.Visible = false
+            RightSide.Visible = false
+            BottomSide.Visible = false
+            BottomDown.Visible = false
+            BottomRightSide.Visible = false
+            BottomRightDown.Visible = false
+            NameTag.Visible = false
+            WeaponText.Visible = false
+            BarBackRound.Visible = false
+            Bar.Visible = false
+        end
+--
+        if not model then
+            LeftTop:Destroy()
+            LeftSide:Destroy()
+            RightTop:Destroy()
+            RightSide:Destroy()
+            BottomSide:Destroy()
+            BottomDown:Destroy()
+            BottomRightSide:Destroy()
+            BottomRightDown:Destroy()
+            NameTag:Destroy()
+            WeaponText:Destroy()
+            BarBackRound:Destroy()
+            Bar:Destroy()
+            if Connection then
+                Connection:Disconnect()
+            end
+        end
+    end)
 end
 --
-rs.RenderStepped:Connect(function()
-    Vercore:UpdateESP()
+local function IncrementBarValue()
+    while true do
+        if BarValue < 100 then
+            wait(5) 
+            BarValue = math.min(BarValue + 1, 100)  
+        end
+        wait(5) 
+    end
+end
+--
+coroutine.wrap(IncrementBarValue)()
+--
+local function ResetLowBarValue()
+    while true do
+        if BarValue <= 1 then
+            wait(1)
+            BarValue = 100 
+        end
+        wait(1)
+    end
+end
+--
+coroutine.wrap(ResetLowBarValue)()
+--
+local function onLogMessage(message)
+    local HealthAfr = message:match("->(%d+%.?%d*)hp")
+    HealthAfr = tonumber(HealthAfr)
+    if HealthAfr then
+        BarValue = math.floor(HealthAfr) 
+    end
+end
+--
+BeamVar.LogService.MessageOut:Connect(onLogMessage)
+--
+local Cache = {}
+for i,v in pairs(PlayerList) do
+    if v.type == "Player" and v.model:FindFirstChild("HumanoidRootPart") and not table.find(Cache, v) then
+        table.insert(Cache, v)
+        ESP(v)
+    end
+end
+--
+game:GetService("Workspace").ChildAdded:Connect(function()
+    task.delay(1.5, function()
+        for i,v in pairs(PlayerList) do
+            if v.type == "Player" and v.model:FindFirstChild("HumanoidRootPart") and not table.find(Cache, v) then
+                table.insert(Cache, v)
+                ESP(v)
+            end
+        end
+    end)
 end)
