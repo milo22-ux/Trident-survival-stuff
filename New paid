@@ -1,0 +1,43 @@
+local RunService = game:GetService("RunService")
+local watermarkEnabled = true
+
+local watermarkText = Drawing.new("Text")
+watermarkText.ZIndex = 2
+watermarkText.Transparency = 1
+watermarkText.Outline = true
+watermarkText.OutlineColor = Color3.new()
+watermarkText.Font = Drawing.Fonts.UI
+watermarkText.Size = 18
+
+local watermarkBox = Drawing.new("Square")
+watermarkBox.ZIndex = 1
+watermarkBox.Filled = true
+watermarkBox.Color = Color3.new(0, 0, 0)
+watermarkBox.Transparency = 0.5
+
+local fpstimer, fps, finalfps = tick(), 0, 60
+RunService.RenderStepped:Connect(function()
+    fps = fps + 1
+    if fpstimer + 1 <= tick() then
+        fpstimer = tick()
+        finalfps = fps
+        fps = 0
+    end
+
+    local hue = (tick() % 5) / 5
+    watermarkText.Color = Color3.fromHSV(hue, 1, 1)
+
+    watermarkText.Text = ("Vercore.xyz | %s | %s fps"):format(
+        os.date("%b %d %Y"),
+        tostring(finalfps)
+    )
+
+    local pos = Vector2.new(10, 10)
+    watermarkText.Position = pos
+
+    watermarkBox.Position = pos - Vector2.new(5, 5)
+    watermarkBox.Size = Vector2.new(watermarkText.TextBounds.X + 10, watermarkText.TextBounds.Y + 10)
+
+    watermarkText.Visible = watermarkEnabled
+    watermarkBox.Visible = watermarkEnabled
+end)
